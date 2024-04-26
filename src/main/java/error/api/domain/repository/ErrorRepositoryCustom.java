@@ -1,10 +1,11 @@
 package error.api.domain.repository;
 
-import error.api.dto.ErrorGetFindListDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
+import error.api.dto.ErrorGetFindListDto;
 
 public interface ErrorRepositoryCustom {
 
-    List<ErrorGetFindListDto.FindListResponse> findErrorList(ErrorGetFindListDto.request request);
+	Page<ErrorGetFindListDto.FindListResponse> findErrorList(ErrorGetFindListDto.Request request, Pageable pageable);
 }

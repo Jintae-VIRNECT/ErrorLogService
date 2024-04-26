@@ -1,18 +1,6 @@
 package error.api.domain.repository;
 
-
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.StringExpression;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import error.api.domain.entity.QError;
-import error.api.dto.ErrorGetFindListDto;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.RequestEntity;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
+import static error.api.domain.entity.QError.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,64 +8,89 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
+
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import error.api.dto.ErrorGetFindListDto;
+import lombok.RequiredArgsConstructor;
+
 @RequiredArgsConstructor
 public class ErrorRepositoryImpl implements ErrorRepositoryCustom {
 
-    private final JPAQueryFactory jpaQueryFactory;
+	private final JPAQueryFactory jpaQueryFactory;
 
-    QError qe = QError.error;
+	@Override
+	public Page<ErrorGetFindListDto.FindListResponse> findErrorList(ErrorGetFindListDto.Request request, Pageable pageable) {
 
-    @Override
-    public List<ErrorGetFindListDto.FindListResponse> findErrorList(ErrorGetFindListDto.request request) {
+		List<ErrorGetFindListDto.FindListResponse> contents = jpaQueryFactory.select(
+				Projections.constructor(
+					ErrorGetFindListDto.FindListResponse.class,
+					error.userUuid,
+					error.projectName,
+					error.code,
+					error.message,
+					error.createDateTime
+				)).from(error)
+			.where(
+				userUuidEq(request.getUserUuid()),
+				codeEq(request.getCode()),
+				projectNameEq(request.getProjectName()),
+				messageEq(request.getMessage()),
+				between(request.getStartDate(), request.getEndDate())
+			)
+			.orderBy(error.id.desc())
+			.offset(pageable.getOffset())
+			.limit(pageable.getPageSize())
+			.fetch();
 
-        return jpaQueryFactory.select(
-            Projections.constructor(ErrorGetFindListDto.FindListResponse.class,
-                qe.userUuid,
-                qe.projectName,
-                qe.code,
-                qe.message,
-                qe.createDateTime
-        )).from(qe)
-                .where(
-                        userUuidEq(request.getUser_uuid()),
-                        codeEq(request.getCode()),
-                        projectNameEq(request.getProject_name()),
-                        messageEq(request.getMessage()),
-                        between(request.getStart_date(), request.getEnd_date()))
-                .orderBy(qe.id.desc())
-                .fetch();
-    }
+		JPAQuery<Long> count = jpaQueryFactory.select(error.count())
+			.from(error)
+			.where(
+				userUuidEq(request.getUserUuid()),
+				codeEq(request.getCode()),
+				projectNameEq(request.getProjectName()),
+				messageEq(request.getMessage()),
+				between(request.getStartDate(), request.getEndDate())
+			);
 
-    private BooleanExpression between(String start, String end) {
+		return PageableExecutionUtils.getPage(contents, pageable, count::fetchOne);
+	}
 
+	private BooleanExpression between(String start, String end) {
 
-        if(start != null || end != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-            LocalDate date = LocalDate.parse(start, formatter);
-            LocalDateTime dateTime = date.atTime(00,00,00);
+		if (StringUtils.isEmpty(start) && StringUtils.isEmpty(end)) {
+			return null;
+		}
 
-            LocalDateTime dateTime1 = LocalDate.parse(end, formatter).atTime(LocalTime.MAX);
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+		LocalDate date = LocalDate.parse(start, formatter);
+		LocalDateTime dateTime = date.atTime(00, 00, 00);
+		LocalDateTime dateTime1 = LocalDate.parse(end, formatter).atTime(LocalTime.MAX);
 
-            return qe.createDateTime.between(dateTime, dateTime1);
-        }
+		return error.createDateTime.between(dateTime, dateTime1);
+	}
 
-        return null;
-    }
+	private BooleanExpression projectNameEq(String projectName) {
+		return StringUtils.isEmpty(projectName) ? null : error.projectName.eq(projectName);
+	}
 
-    private BooleanExpression projectNameEq(String projectName) {
-        return StringUtils.hasText(projectName) ? qe.projectName.eq(projectName) : null;
-    }
+	private BooleanExpression userUuidEq(String userUuid) {
+		return StringUtils.isEmpty(userUuid) ? null : error.userUuid.eq(userUuid);
+	}
 
-    private BooleanExpression userUuidEq(String userUuid) {
-        return StringUtils.hasText(userUuid) ? qe.userUuid.eq(userUuid) : null;
-    }
+	private BooleanExpression codeEq(String code) {
+		return StringUtils.isEmpty(code) ? null : error.code.eq(code);
+	}
 
-    private BooleanExpression codeEq(String code) {
-        return StringUtils.hasText(code) ? qe.code.eq(code) : null;
-    }
-
-    private BooleanExpression messageEq(String message) {
-        return StringUtils.hasText(message) ? qe.message.eq(message) : null;
-    }
+	private BooleanExpression messageEq(String message) {
+		return StringUtils.isEmpty(message) ? null : error.message.eq(message);
+	}
 
 }

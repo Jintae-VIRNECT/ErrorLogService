@@ -1,5 +1,5 @@
 server:
-  port: 8764
+  port: 8765
 
 spring:
   datasource:
@@ -9,6 +9,6 @@ spring:
   jpa:
     open-in-view: false
     generate-ddl: true
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: update
