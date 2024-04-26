@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 	@Index(name = "idx_error_user_uuid", columnList = "userUuid"),
 	@Index(name = "idx_error_project_name", columnList = "projectName"),
 	@Index(name = "idx_error_code", columnList = "code"),
+	@Index(name = "idx_error_message", columnList = "message"),
 	@Index(name = "idx_error_create_date_time", columnList = "createDateTime")})
 public class Error {
 
