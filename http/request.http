@@ -1,0 +1,19 @@
+
+### 오류 발생시 데이터 저장
+POST localhost:8764/v1/log
+Content-Type: application/json
+
+{
+  "user_uuid" : "dd",
+  "code" : "ff",
+  "message" : "4444"
+}
+
+### 오류 데이터 조회 5가지 파라미터
+#        user_uuid;
+#        code;
+#        message;
+#        tart_date;
+#        end_date;
+#        project_name;
+GET localhost:8764/v1/log

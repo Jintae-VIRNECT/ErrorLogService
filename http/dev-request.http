@@ -1,0 +1,22 @@
+
+### 로그 데이터 저장
+POST http://192.168.0.9:8764/v1/log
+Content-Type: application/json
+
+{
+  "user_uuid" : "체크체크11",
+  "code" : "f3333f",
+  "project_name": "실제 테스트~!!",
+  "message" : "4444"
+}
+
+### 로그 조회 5가지 파라미터
+#        user_uuid;
+#        code;
+#        message;
+#        start_date;
+#        end_date;
+#        project_name;
+# ex) GET http://192.168.0.9:8764/v1/log?user_uuid=dd&code=ff&message=444&start_date=20230608&end_date=20230608
+
+GET http://192.168.0.9:8764/v1/log?project_name=실제 테스트~!!&start_date=20230622&end_date=20230622
